@@ -38,14 +38,14 @@ subtest 'Multiple values - PostgreSQL uses ANY' => sub {
 subtest 'Multiple values - MySQL uses AND combine' => sub {
     my $mysql_multi = $mysql->compare(status => ['active', 'pending', 'verified']);
 
-    is $mysql_multi->to_string(), 'status = ? AND status = ? AND status = ?';
+    is $mysql_multi->to_string(), 'status = ? OR status = ? OR status = ?';
     is $mysql_multi->params(), ['active', 'pending', 'verified'];
 };
 
 subtest 'Multiple values - SQLite uses AND combine' => sub {
     my $sqlite_multi = $sqlite->compare(status => ['active', 'pending', 'verified']);
 
-    is $sqlite_multi->to_string(), 'status = ? AND status = ? AND status = ?';
+    is $sqlite_multi->to_string(), 'status = ? OR status = ? OR status = ?';
     is $sqlite_multi->params(), ['active', 'pending', 'verified'];
 };
 
@@ -59,14 +59,14 @@ subtest 'Negated multiple values - PostgreSQL uses ALL with NOT' => sub {
 subtest 'Negated multiple values - MySQL uses OR combine' => sub {
     my $mysql_not = $mysql->compare(status => ['deleted', 'banned'], negated => 1);
 
-    is $mysql_not->to_string(), 'NOT ( status = ? ) OR NOT ( status = ? )';
+    is $mysql_not->to_string(), 'NOT ( status = ? ) AND NOT ( status = ? )';
     is $mysql_not->params(), ['deleted', 'banned'];
 };
 
 subtest 'Negated multiple values - SQLite uses OR combine' => sub {
     my $sqlite_not = $sqlite->compare(status => ['deleted', 'banned'], negated => 1);
 
-    is $sqlite_not->to_string(), 'NOT ( status = ? ) OR NOT ( status = ? )';
+    is $sqlite_not->to_string(), 'NOT ( status = ? ) AND NOT ( status = ? )';
     is $sqlite_not->params(), ['deleted', 'banned'];
 };
 
@@ -121,7 +121,7 @@ subtest 'Complex query with AND combine in MySQL' => sub {
         $mysql->compare(age => 18, comparator => '>=')
     );
 
-    is $complex->to_string(), '( status = ? AND status = ? ) AND ( role = ? AND role = ? ) AND age >= ?';
+    is $complex->to_string(), '( status = ? OR status = ? ) AND ( role = ? OR role = ? ) AND age >= ?';
     my $params = $complex->params();
     is ref($params), 'ARRAY';
     is scalar(@$params), 5;
@@ -155,7 +155,7 @@ subtest 'Two values edge case' => sub {
     my $mysql_two = $mysql->compare(id => [1, 2]);
 
     is $pg_two->to_string(), 'id = ANY(?)';
-    is $mysql_two->to_string(), 'id = ? AND id = ?';
+    is $mysql_two->to_string(), 'id = ? OR id = ?';
 };
 
 done_testing();
