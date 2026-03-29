@@ -93,7 +93,7 @@ class Query::Dialect::SQLite {
             $value->@*;
         return @expressions == 1
             ? $expressions[0]
-            : $self->combine($negated ? 'OR' : 'AND' => @expressions);
+            : $self->combine($negated ? 'AND' : 'OR' => @expressions);
     }
 }
 
