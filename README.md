@@ -71,7 +71,7 @@ Combine expressions with AND.
 ```perl
 my $query = $qb->combine_and(
     $qb->compare(age => 18, comparator => '>='),
-    $qb->compare(country => 'US')
+    $qb->compare(country => 'Cuba')
 );
 # SQL: age >= ? AND country = ?
 ```
