@@ -7,7 +7,6 @@ A flexible SQL query builder for Perl with dialect support for PostgreSQL, MySQL
 - Automatically generates SQL clauses optimized for your database
 - Generates parameterized queries to prevent SQL injection
 - Build complex queries from simple building blocks
-- Intuitive method chaining with named parameters
 
 ## Supported Dialects
 
@@ -23,14 +22,15 @@ use Query::Builder;
 
 my $qb = Query::Builder->new(dialect => 'sqlite');
 
-# Build a simple comparison
-my $query = $qb->compare(name => 'John');
+# Build a clause
+my $clause = $qb->combine(AND => 
+    $qb->compare(name => 'Fatima',
+    $qb->is_true('can_sing'));
 
-# Get SQL and parameters
-my $sql = $query->to_string();
-# name = ?
-my $params = $query->params();
-# ['John']
+my @result = $dbh->selectall_array('SELECT * FROM table WHERE '. $clause->as_sql(), { Slice => {} }, $clause->params());
+
+# SELECT * FROM table WHERE name = ? AND can_sing
+# with params ('Fatima')
 ```
 
 ## API Reference
@@ -45,7 +45,7 @@ Compare a column to one or more values.
 $qb->compare(name => 'John');
 $qb->compare(age => 18, comparator => '>=');
 $pg->compare(status => ['active', 'pending']);
-$pg->compare(status => ['deleted', 'banned'], negated => 1);
+$pg->compare(status => ['deleted', 'banned'], negated => true);
 $pg->compare(score => [80, 90, 100], comparator => '>');
 ```
 
@@ -59,8 +59,8 @@ Pattern matching with LIKE.
 # PostgreSQL: Uses ILIKE for case-insensitive by default
 my $pg = Query::Builder->new(dialect => 'pg');
 
-$pg->like(name => '%John%', case_sensitive => 1);
-$qb->like(email => '%@spam.com', negated => 1);
+$pg->like(name => '%John%', case_sensitive => true);
+$qb->like(email => '%@spam.com', negated => true);
 ```
 ### Logical Operators
 
@@ -140,7 +140,7 @@ my $query = $qb->combine_and(
         $qb->compare(role => 'admin'),
         $qb->compare(role => 'moderator')
     ),
-    $qb->compare(active => 1),
+    $qb->compare(active => true),
     $qb->compare(age => 18, comparator => '>=')
 );
 # SQL: ( role = ? OR role = ? ) AND active = ? AND age >= ?

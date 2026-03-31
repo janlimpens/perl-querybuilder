@@ -4,36 +4,59 @@ use Object::Pad;
 
 class Query::Expression {
     use builtin qw(trim);
-    
+
     field $parts :param;
     field $params :param = undef;
-    field $joined_by :param = ' ';
+    field $joined_by :param //= ' ';
+    field $brackets :param = undef;
 
-    method to_string() {
-        $parts = [$parts]
+    ADJUST {
+        die 'parts are required'
+            unless defined $parts;
+        $parts = [ $parts ]
             unless ref $parts eq 'ARRAY';
-        return join $joined_by, map { ref $_ ? $_->to_string() : trim($_) } $parts->@*
+    }
+
+    method as_sql() {
+        my $sql = join $joined_by,
+            map { $_ isa Query::Expression ? $_->as_sql() : trim($_) }
+            $parts->@*;
+        if ($brackets) {
+            my ($open, $close) = split //, $brackets;
+            $sql = "$open $sql $close";
+        }
+        return $sql
     }
 
     method params() {
-        $parts = [$parts]
-            unless ref $parts eq 'ARRAY';
-        if ($params) {
-            return $params
-        } else {
-            my @p;
-            for my $part ($parts->@*) {
-                if (ref $part && $part->can('params')) {
-                    my $sub_params = $part->params();
-                    if (ref $sub_params eq 'ARRAY') {
-                        push @p, $sub_params->@*;
-                    } else {
-                        push @p, $sub_params;
-                    }
-                }
-            }
-            return @p == 0 ? [] : (@p == 1 ? $p[0] : \@p);
+        my @params = $params && ref $params eq 'ARRAY' ? $params->@* : ();
+        push @params, $params if $params && ref $params ne 'ARRAY';
+        for my $part ($parts->@*) {
+            next
+                unless $part isa Query::Expression;
+            push @params, $part->params();
         }
+        return @params
+    }
+
+    method add_param($param) {
+        push $params->@*, $param;
+        return $self
+    }
+
+    method wrap($new_brackets//='()') {
+        return Query::Expression->new(
+            parts => $parts,
+            params => $params,
+            joined_by => $joined_by,
+            brackets => $new_brackets)
+    }
+
+    method negate() {
+        return Query::Expression->new(
+            parts => ['NOT', $self->wrap()],
+            joined_by => ' ',
+            params => [])
     }
 }
 

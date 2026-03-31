@@ -6,17 +6,23 @@ use Query::Dialect::MySQL;
 use Query::Dialect::SQLite;
 
 class Query::Builder {
-    field $dialect :param = 'pg';
+    field $dialect :param;
     field $dialect_impl;
 
     ADJUST {
+        die 'dialect required'
+            unless $dialect;
         $dialect_impl = $self->_create_dialect($dialect);
     }
 
     method _create_dialect($name) {
-        return Query::Dialect::PostgreSQL->new() if $name eq 'pg' || $name eq 'postgresql';
-        return Query::Dialect::MySQL->new() if $name eq 'mysql';
-        return Query::Dialect::SQLite->new() if $name eq 'sqlite';
+        $name = lc($name);
+        return Query::Dialect::PostgreSQL->new()
+            if $name eq 'pg' || $name eq 'postgresql';
+        return Query::Dialect::MySQL->new()
+            if $name eq 'mysql';
+        return Query::Dialect::SQLite->new()
+            if $name eq 'sqlite';
         die "Unknown dialect: $name. Supported: pg, mysql, sqlite";
     }
 
