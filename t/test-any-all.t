@@ -35,17 +35,17 @@ subtest 'Multiple values - PostgreSQL uses ANY' => sub {
     is [$pg_multi->params()], ['active', 'pending', 'verified'];
 };
 
-subtest 'Multiple values - MySQL uses AND combine' => sub {
+subtest 'Multiple values - MySQL uses IN' => sub {
     my $mysql_multi = $mysql->compare(status => ['active', 'pending', 'verified']);
 
-    is $mysql_multi->as_sql(), 'status = ? OR status = ? OR status = ?';
+    is $mysql_multi->as_sql(), 'status IN (?, ?, ?)';
     is [$mysql_multi->params()], ['active', 'pending', 'verified'];
 };
 
-subtest 'Multiple values - SQLite uses AND combine' => sub {
+subtest 'Multiple values - SQLite uses IN' => sub {
     my $sqlite_multi = $sqlite->compare(status => ['active', 'pending', 'verified']);
 
-    is $sqlite_multi->as_sql(), 'status = ? OR status = ? OR status = ?';
+    is $sqlite_multi->as_sql(), 'status IN (?, ?, ?)';
     is [$sqlite_multi->params()], ['active', 'pending', 'verified'];
 };
 
@@ -56,17 +56,17 @@ subtest 'Negated multiple values - PostgreSQL uses != ALL' => sub {
     is [$pg_not->params()], ['deleted', 'banned'];
 };
 
-subtest 'Negated multiple values - MySQL uses AND combine' => sub {
+subtest 'Negated multiple values - MySQL uses NOT IN' => sub {
     my $mysql_not = $mysql->compare(status => ['deleted', 'banned'], negated => 1);
 
-    is $mysql_not->as_sql(), 'NOT ( status = ? ) AND NOT ( status = ? )';
+    is $mysql_not->as_sql(), 'status NOT IN (?, ?)';
     is [$mysql_not->params()], ['deleted', 'banned'];
 };
 
-subtest 'Negated multiple values - SQLite uses AND combine' => sub {
+subtest 'Negated multiple values - SQLite uses NOT IN' => sub {
     my $sqlite_not = $sqlite->compare(status => ['deleted', 'banned'], negated => 1);
 
-    is $sqlite_not->as_sql(), 'NOT ( status = ? ) AND NOT ( status = ? )';
+    is $sqlite_not->as_sql(), 'status NOT IN (?, ?)';
     is [$sqlite_not->params()], ['deleted', 'banned'];
 };
 
@@ -113,14 +113,14 @@ subtest 'Complex query with ANY in PostgreSQL' => sub {
     is $params[5], 18;
 };
 
-subtest 'Complex query with AND combine in MySQL' => sub {
+subtest 'Complex query with IN in MySQL' => sub {
     my $complex = $mysql->combine_and(
         $mysql->compare(status => ['active', 'pending']),
         $mysql->compare(role => ['admin', 'moderator']),
         $mysql->compare(age => 18, comparator => '>=')
     );
 
-    is $complex->as_sql(), '( status = ? OR status = ? ) AND ( role = ? OR role = ? ) AND age >= ?';
+    is $complex->as_sql(), 'status IN (?, ?) AND role IN (?, ?) AND age >= ?';
     my @params = $complex->params();
     is scalar(@params), 5;
     is $params[0], 'active';
@@ -153,7 +153,7 @@ subtest 'Two values edge case' => sub {
     my $mysql_two = $mysql->compare(id => [1, 2]);
 
     is $pg_two->as_sql(), 'id = ANY(?)';
-    is $mysql_two->as_sql(), 'id = ? OR id = ?';
+    is $mysql_two->as_sql(), 'id IN (?, ?)';
 };
 
 done_testing();

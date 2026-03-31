@@ -52,7 +52,9 @@ class Query::Expression {
             brackets => $new_brackets)
     }
 
-    method negate() {
+    method negate($really=true) {
+        return $self
+            unless $really;
         return Query::Expression->new(
             parts => ['NOT', $self->wrap()],
             joined_by => ' ',

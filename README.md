@@ -4,8 +4,8 @@ A flexible SQL query builder for Perl with dialect support for PostgreSQL, MySQL
 
 ## Features
 
-- Automatically generates SQL clauses optimized for your database
-- Generates parameterized queries to prevent SQL injection
+- Generates SQL clauses optimized for your database
+- Separates query from parameters
 - Build complex queries from simple building blocks
 
 ## Supported Dialects
@@ -27,8 +27,10 @@ my $clause = $qb->combine(AND =>
     $qb->compare(name => 'Fatima',
     $qb->is_true('can_sing'));
 
-my @result = $dbh->selectall_array('SELECT * FROM table WHERE '. $clause->as_sql(), { Slice => {} }, $clause->params());
-
+my @result = $dbh->selectall_array(
+    'SELECT * FROM table WHERE '. $clause->as_sql(), { Slice => {} }, 
+    $clause->params());
+# issues
 # SELECT * FROM table WHERE name = ? AND can_sing
 # with params ('Fatima')
 ```
@@ -101,7 +103,6 @@ $qb->is_true();  # SQL: TRUE
 
 # With column parameter - returns the column as-is
 $qb->is_true('is_active');  # SQL: is_active
-$qb->is_true('verified');   # SQL: verified
 
 # Use case: boolean column checks
 ```
@@ -144,5 +145,5 @@ my $query = $qb->combine_and(
     $qb->compare(age => 18, comparator => '>=')
 );
 # SQL: ( role = ? OR role = ? ) AND active = ? AND age >= ?
-# Params: ['admin', 'moderator', 1, 18]
+# Params: ('admin', 'moderator', 1, 18)
 ```

@@ -5,6 +5,7 @@ use Query::Expression;
 
 class Query::Dialect::MySQL;
 inherit Query::Dialect;
+use builtin ':5.40';
 
 method is_true($column=undef) {
     return Query::Expression->new(

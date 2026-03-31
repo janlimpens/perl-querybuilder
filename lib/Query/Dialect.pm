@@ -54,16 +54,18 @@ method combine_or(@expressions) {
 method compare($column, $value, %args) {
     my $comparator = $args{comparator} // '=';
     $comparator = trim($comparator);
-    my $negated = $args{negated};
-    my @expressions =
-        map {
-            my $exp = Query::Expression->new(
-                parts => [$column, $comparator, '?'],
-                params => [$_] );
-            $negated ? $self->negate($exp) : $exp
-        }
-        ref $value eq 'ARRAY' ? $value->@* : $value;
-    return $self->combine($negated ? 'AND' : 'OR' => @expressions);
+    my $negated = !!$args{negated};
+    return Query::Expression->new(
+        parts => [$column, $comparator, '?'],
+        params => $value)->negate($negated)
+        unless ref $value eq 'ARRAY';
+    if ($comparator eq '=') {
+        my $placeholders = join(', ', ('?') x $value->@*);
+        my $operator = $negated ? 'NOT IN' : 'IN';
+        return Query::Expression->new(
+            parts => [$column, $operator, "($placeholders)"],
+            params => [$value->@*]);
+    }
 }
 
 method is_true($column);
