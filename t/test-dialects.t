@@ -22,9 +22,9 @@ subtest 'PostgreSQL Dialect' => sub {
     is $negated->as_sql(), 'NOT ( name = ? )';
     is [$negated->params()], ['Hansi'];
 
-    # Test negated compare (multiple values - uses ANY with NOT)
+    # Test negated compare (multiple values - uses != ALL)
     my $negated_multi = $qb->compare(name => [qw(Hansi Franz)], negated => 1);
-    is $negated_multi->as_sql(), 'NOT ( name = ANY(?) )';
+    is $negated_multi->as_sql(), 'name != ALL(?)';
     is [$negated_multi->params()], [qw(Hansi Franz)];
 
     # Test combine_and
@@ -91,7 +91,7 @@ subtest 'PostgreSQL Dialect' => sub {
     is [$any_compare->params()], ['active', 'pending', 'verified'];
 
     my $all_negated = $qb->compare(status => ['deleted', 'banned'], negated => 1);
-    is $all_negated->as_sql(), 'NOT ( status = ANY(?) )';
+    is $all_negated->as_sql(), 'status != ALL(?)';
     is [$all_negated->params()], ['deleted', 'banned'];
 };
 

@@ -49,10 +49,10 @@ subtest 'Multiple values - SQLite uses AND combine' => sub {
     is [$sqlite_multi->params()], ['active', 'pending', 'verified'];
 };
 
-subtest 'Negated multiple values - PostgreSQL uses ANY with NOT' => sub {
+subtest 'Negated multiple values - PostgreSQL uses != ALL' => sub {
     my $pg_not = $pg->compare(status => ['deleted', 'banned'], negated => 1);
 
-    is $pg_not->as_sql(), 'NOT ( status = ANY(?) )';
+    is $pg_not->as_sql(), 'status != ALL(?)';
     is [$pg_not->params()], ['deleted', 'banned'];
 };
 
@@ -87,11 +87,11 @@ subtest 'PostgreSQL ANY with different comparators' => sub {
     is [$ne_any->params()], [1, 2, 3];
 };
 
-subtest 'PostgreSQL negated with different comparators uses ANY with NOT' => sub {
-    # NOT (score > ANY(?)) means score is not greater than any value
-    my $not_gt_any = $pg->compare(score => [70, 80, 90], comparator => '>', negated => 1);
-    is $not_gt_any->as_sql(), 'NOT ( score > ANY(?) )';
-    is [$not_gt_any->params()], [70, 80, 90];
+subtest 'PostgreSQL negated with different comparators uses negated operator with ALL' => sub {
+    # score < ALL(?) means score is less than all values (negation of >)
+    my $not_gt = $pg->compare(score => [70, 80, 90], comparator => '>', negated => 1);
+    is $not_gt->as_sql(), 'score < ALL(?)';
+    is [$not_gt->params()], [70, 80, 90];
 };
 
 subtest 'Complex query with ANY in PostgreSQL' => sub {

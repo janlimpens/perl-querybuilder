@@ -42,12 +42,12 @@ method compare($column, $value, %args) {
     my $negated = $args{negated} // 0;
     
     if ($negated) {
-        # For negated: use NOT (col = ANY(?)) - equivalent to NOT IN
-        # This is semantically correct: NOT (a OR b) = NOT a AND NOT b
-        my $exp = Query::Expression->new(
-            parts => [$column, $comparator, "ANY(?)"],
+        # For negated: use negated comparator with ALL
+        # e.g., col != ALL(?) is equivalent to NOT IN
+        my $neg_comparator = $self->negation_for($comparator) // "NOT $comparator";
+        return Query::Expression->new(
+            parts => [$column, $neg_comparator, "ALL(?)"],
             params => $value);
-        return $exp->negate();
     } else {
         # For non-negated: use = ANY (equivalent to IN)
         return Query::Expression->new(

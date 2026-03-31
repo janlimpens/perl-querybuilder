@@ -24,10 +24,10 @@ subtest 'negated compare - single value' => sub {
     is [$negated->params()], ['Hansi'], 'negated params';
 };
 
-subtest 'negated compare - multiple values with ANY' => sub {
+subtest 'negated compare - multiple values with != ALL' => sub {
     my $negated_multi = $qb->compare(name => [qw(Hansi Hansi2)], negated => 1);
-    is $negated_multi->as_sql(), 'NOT ( name = ANY(?) )', 'negated ANY SQL';
-    is [$negated_multi->params()], [qw(Hansi Hansi2)], 'negated ANY params';
+    is $negated_multi->as_sql(), 'name != ALL(?)', 'negated != ALL SQL';
+    is [$negated_multi->params()], [qw(Hansi Hansi2)], 'negated != ALL params';
 };
 
 subtest 'combine_and' => sub {
@@ -116,10 +116,10 @@ subtest 'ANY with different comparators' => sub {
     is [$any_gt->params()], [80, 90, 100], 'ANY > params';
 };
 
-subtest 'negated ANY with NOT' => sub {
+subtest 'negated with != ALL' => sub {
     my $not_any = $qb->compare(status => ['deleted', 'banned', 'suspended'], negated => 1);
-    is $not_any->as_sql(), 'NOT ( status = ANY(?) )', 'negated ANY SQL';
-    is [$not_any->params()], ['deleted', 'banned', 'suspended'], 'negated ANY params';
+    is $not_any->as_sql(), 'status != ALL(?)', 'negated != ALL SQL';
+    is [$not_any->params()], ['deleted', 'banned', 'suspended'], 'negated != ALL params';
 };
 
 done_testing();

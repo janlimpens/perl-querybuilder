@@ -7,14 +7,17 @@ class Query::Dialect :abstract;
 use builtin ':5.40';
 use Query::Expression;
 
-field %negations = do {
-    my %cmps = (
-        '=' => '!=',
-        '>' => '<',
-        '>=' => '<=');
-    %cmps = ( %cmps, reverse %cmps );
-    %cmps
-};
+method negation_for($comparator) {
+    state %negations = do {
+        my %cmps = (
+            '=' => '!=',
+            '>' => '<',
+            '>=' => '<=');
+        %cmps = ( %cmps, reverse %cmps );
+        %cmps
+    };
+    return $negations{$comparator}
+}
 
 method negate(@expressions) {
     return
