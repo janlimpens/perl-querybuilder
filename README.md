@@ -44,10 +44,9 @@ my @result = $dbh->selectall_array(
 Compare a column to one or more values.
 
 ```perl
-$qb->compare(name => 'John');
+$qb->compare(name => 'Agnaldo');
 $qb->compare(age => 18, comparator => '>=');
-$pg->compare(status => ['active', 'pending']);
-$pg->compare(status => ['deleted', 'banned'], negated => true);
+$pg->compare(status => ['active', 'pending']); # output depending on dialect with IN (?, ?) or ANY(?)
 $pg->compare(score => [80, 90, 100], comparator => '>');
 ```
 
@@ -61,7 +60,7 @@ Pattern matching with LIKE.
 # PostgreSQL: Uses ILIKE for case-insensitive by default
 my $pg = Query::Builder->new(dialect => 'pg');
 
-$pg->like(name => '%John%', case_sensitive => true);
+$pg->like(name => '%Agnaldo%', case_sensitive => true);
 $qb->like(email => '%@spam.com', negated => true);
 ```
 ### Logical Operators
@@ -118,9 +117,9 @@ Returns a FALSE expression or a negated column reference.
 Negate one or more expressions.
 
 ```perl
-my $expr = $qb->compare(name => 'test');
-my $negated = $qb->negate($expr);
-# SQL: NOT ( name = ? )
+my $expr = ;
+my $negated = $qb->negate($qb->compare(name => 'test'), $qb->compare(name => 'foo'));
+# SQL: NOT ( name = ? OR foo = ?)
 ```
 
 #### `combine($link, @expressions)`
@@ -141,7 +140,7 @@ my $query = $qb->combine_and(
         $qb->compare(role => 'admin'),
         $qb->compare(role => 'moderator')
     ),
-    $qb->compare(active => true),
+    $qb->is_true('active'),
     $qb->compare(age => 18, comparator => '>=')
 );
 # SQL: ( role = ? OR role = ? ) AND active = ? AND age >= ?
