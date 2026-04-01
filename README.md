@@ -22,15 +22,15 @@ use Query::Builder;
 
 my $qb = Query::Builder->new(dialect => 'sqlite');
 
-# Build a clause
 my $clause = $qb->combine(AND => 
     $qb->compare(name => 'Fatima',
     $qb->is_true('can_sing'));
 
 my @result = $dbh->selectall_array(
-    'SELECT * FROM table WHERE '. $clause->as_sql(), { Slice => {} }, 
+    "SELECT * FROM table WHERE $clause", { Slice => {} }, 
     $clause->params());
-# issues
+
+# issues query:
 # SELECT * FROM table WHERE name = ? AND can_sing
 # with params ('Fatima')
 ```
@@ -44,10 +44,15 @@ my @result = $dbh->selectall_array(
 Compare a column to one or more values.
 
 ```perl
-$qb->compare(name => 'Agnaldo');
+$qb->compare(name => 'Agnaldo')->negate();
+# NOT ( name = ? )
 $qb->compare(age => 18, comparator => '>=');
-$pg->compare(status => ['active', 'pending']); # output depending on dialect with IN (?, ?) or ANY(?)
-$pg->compare(score => [80, 90, 100], comparator => '>');
+# age >= 16
+$pg->compare(status => ['active', 'pending']); 
+# output depending on dialect with IN (?, ?) or ANY(?)
+# age IN (?, ?)
+$pg->compare(score => [80, 90, 100], comparator => '&&'); # depending on db
+# score && ?
 ```
 
 ### Pattern Matching
@@ -61,6 +66,7 @@ Pattern matching with LIKE.
 my $pg = Query::Builder->new(dialect => 'pg');
 
 $pg->like(name => '%Agnaldo%', case_sensitive => true);
+# name ILIKE ?
 $qb->like(email => '%@spam.com', negated => true);
 ```
 ### Logical Operators

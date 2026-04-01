@@ -122,4 +122,10 @@ subtest 'negated with != ALL' => sub {
     is [$not_any->params()], ['deleted', 'banned', 'suspended'], 'negated != ALL params';
 };
 
+subtest 'string overload' => sub {
+    my $q = $qb->compare(friend => 'Carlotta');
+    my $sql = "SELECT * FROM suspects WHERE $q";
+    is $sql, 'SELECT * FROM suspects WHERE friend = ?', 'string overload SQL';
+};
+
 done_testing();
