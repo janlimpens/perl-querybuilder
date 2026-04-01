@@ -23,7 +23,7 @@ use Query::Builder;
 my $qb = Query::Builder->new(dialect => 'sqlite');
 
 my $clause = $qb->combine(AND => 
-    $qb->compare(name => 'Fatima',
+    $qb->compare(name => ['Fatima', 'Leandra'],
     $qb->is_true('can_sing'));
 
 my @result = $dbh->selectall_array(
@@ -31,8 +31,8 @@ my @result = $dbh->selectall_array(
     $clause->params());
 
 # issues query:
-# SELECT * FROM table WHERE name = ? AND can_sing
-# with params ('Fatima')
+# SELECT * FROM table WHERE name IN (?, ?) AND can_sing
+# with params ('Fatima', 'Leandra')
 ```
 
 ## API Reference
@@ -67,8 +67,10 @@ my $pg = Query::Builder->new(dialect => 'pg');
 
 $pg->like(name => '%Agnaldo%', case_sensitive => true);
 # name ILIKE ?
-$qb->like(email => '%@spam.com', negated => true);
+$qb->like(email => '%@spam.com')->negate();
+# NOT (email LIKE ?)
 ```
+
 ### Logical Operators
 
 #### `combine_and(@expressions)`
@@ -78,8 +80,7 @@ Combine expressions with AND.
 ```perl
 my $query = $qb->combine_and(
     $qb->compare(age => 18, comparator => '>='),
-    $qb->compare(country => 'Cuba')
-);
+    $qb->compare(country => 'Cuba'));
 # SQL: age >= ? AND country = ?
 ```
 
@@ -90,8 +91,7 @@ Works the same, shorthand for
 ```perl
 my $query = $qb->combine(OR =>
     $qb->compare(role => 'admin'),
-    $qb->compare(role => 'moderator')
-);
+    $qb->compare(role => 'moderator'));
 # SQL: role = ? OR role = ?
 ```
 
@@ -124,7 +124,9 @@ Negate one or more expressions.
 
 ```perl
 my $expr = ;
-my $negated = $qb->negate($qb->compare(name => 'test'), $qb->compare(name => 'foo'));
+my $negated = $qb->negate(
+    $qb->compare(name => 'test'), 
+    $qb->compare(name => 'foo'));
 # SQL: NOT ( name = ? OR foo = ?)
 ```
 
@@ -144,11 +146,9 @@ my $query = $qb->combine('OR', @expressions);
 my $query = $qb->combine_and(
     $qb->combine_or(
         $qb->compare(role => 'admin'),
-        $qb->compare(role => 'moderator')
-    ),
+        $qb->compare(role => 'moderator')),
     $qb->is_true('active'),
-    $qb->compare(age => 18, comparator => '>=')
-);
+    $qb->compare(age => 18, comparator => '>='));
 # SQL: ( role = ? OR role = ? ) AND active = ? AND age >= ?
 # Params: ('admin', 'moderator', 1, 18)
 ```
