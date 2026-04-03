@@ -7,6 +7,7 @@ class Query::Dialect :abstract;
 use builtin ':5.40';
 use Query::Expression;
 use Query::Expression::Join;
+use Query::Expression::OrderBy;
 
 method negation_for($comparator) {
     state %negations = do {
@@ -150,6 +151,16 @@ method join($table, %args) {
         table => $table,
         %args
     )
+}
+
+method order_by($column, $direction=undef) {
+    die 'order_by requires a column'
+        unless $column;
+    my $ob = Query::Expression::OrderBy->new(
+        column => $column);
+    $ob->direction(uc $direction)
+        if defined $direction;
+    return $ob
 }
 
 method select();

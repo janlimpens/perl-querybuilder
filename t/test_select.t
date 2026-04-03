@@ -19,8 +19,9 @@ subtest 'simple select' => sub {
             ->joins(
                 'JOIN c USING (company_id)',
                 $qb->join(contacts => using => 'company_id') )
-            ->where($qb->compare(date => '2026-01-01', comparator => '>'));
-    is $select, 'WITH ( SELECT company_id, company_name FROM companies ) AS c, ( SELECT company_id, contact FROM contacts ) AS contacts SELECT id, customer_id, date, amount FROM invoices AS i WHERE date > ?', 'select generated';
+            ->where($qb->compare(date => '2026-01-01', comparator => '>'))
+            ->order_by($qb->order_by('date'));
+    is $select, 'WITH ( SELECT company_id, company_name FROM companies ) AS c, ( SELECT company_id, contact FROM contacts ) AS contacts SELECT id, customer_id, date, amount FROM invoices AS i WHERE date > ? ORDER BY date', 'select generated';
     is [$select->params()], ['2026-01-01'], 'params generated';
 };
 

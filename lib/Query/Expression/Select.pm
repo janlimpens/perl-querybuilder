@@ -12,6 +12,7 @@ field $group_by :param=[];
 field $joins :param=[];
 field $limit :inheritable :param=undef;
 field $offset :inheritable :param=undef;
+field $order_by :param=[];
 field $table :param=[];
 field $where :param=undef;
 
@@ -23,47 +24,35 @@ method _comma(@parts) {
         parts => \@parts )
 }
 
-method _build() {
-    my @parts;
-    push @parts, '('
+method _build :override ()  {
+    $self->reset();
+    $self->add_part('(')
         if $as;
-    push @parts, Query::Expression->new(parts => [WITH => $self->_comma($ctes->@*)])
+    $self->add_part(Query::Expression->new(parts => [WITH => $self->_comma($ctes->@*)]))
         if $ctes->@*;
-    push @parts, 'SELECT';
+    $self->add_part('SELECT');
     $columns = ['*']
         unless $columns;
     $columns = [$columns]
         unless ref $columns eq 'ARRAY';
-    push @parts, $self->_comma($columns->@*);
+    $self->add_part($self->_comma($columns->@*));
     $table = [$table]
         unless ref $table eq 'ARRAY';
-    push @parts, (FROM => $self->_comma($table->@*))
+    $self->add_part(FROM => $self->_comma($table->@*))
         if $table->@*;
-    push @parts, Query::Expression->new(parts => [WHERE => $where])
+    $self->add_part(Query::Expression->new(parts => [WHERE => $where]))
         if $where;
-    push @parts, Query::Expression->new(parts => ['GROUP BY' => $self->_comma($group_by->@*)])
+    $self->add_part(Query::Expression->new(parts => ['ORDER BY' => $self->_comma($order_by->@*)]))
+        if $order_by->@*;
+    $self->add_part(Query::Expression->new(parts => ['GROUP BY' => $self->_comma($group_by->@*)]))
         if $group_by->@*;
-    push @parts, Query::Expression->new(parts => [LIMIT => '?'], params => [$limit])
+    $self->add_part(Query::Expression->new(parts => [LIMIT => '?'], params => [$limit]))
         if defined $limit;
-    push @parts, Query::Expression->new(parts => [OFFSET => '?'], params => [$offset])
+    $self->add_part(Query::Expression->new(parts => [OFFSET => '?'], params => [$offset]))
         if defined $offset;
-    push @parts, ')', 'AS', $as
+    $self->add_part(')', 'AS', $as)
         if $as;
-    $parts = \@parts;
-}
-
-method as_sql {
-    $self->_build();
-    my $sql = join ' ',
-        map { $_ isa Query::Expression ? $_->as_sql() : trim($_) }
-        $parts->@*;
-    return $sql
-}
-use overload '""' => \&as_sql;
-
-method params() {
-    $self->_build();
-    return $self->SUPER::params()
+    return
 }
 
 method columns(@cols) {
@@ -110,5 +99,10 @@ method as($alias=undef) {
 
 method joins(@expressipns) {
     push $joins->@*, @expressipns;
+    return $self
+}
+
+method order_by(@expressions) {
+    push $order_by->@*, @expressions;
     return $self
 }

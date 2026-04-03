@@ -7,7 +7,7 @@ class Query::Expression;
 use builtin ':5.40';
 
 field $parts :inheritable :param = [];
-field $params :inheritable :param = undef;
+field $params :inheritable :param = [];
 field $joined_by :param //= ' ';
 field $brackets :inheritable :param = undef;
 
@@ -16,10 +16,13 @@ ADJUST {
         unless defined $parts;
     $parts = [ $parts ]
         unless ref $parts eq 'ARRAY';
+    $params = [ $params ]
+        unless ref $params eq 'ARRAY';
 }
 
 method as_sql {
     # no () because "" overload comes with 3 args
+    $self->_build();
     my $sql = join $joined_by,
         map { $_ isa Query::Expression ? $_->as_sql() : trim($_) }
         $parts->@*;
@@ -31,6 +34,7 @@ method as_sql {
 }
 
 method params() {
+    $self->_build();
     my @params = $params && ref $params eq 'ARRAY' ? $params->@* : ();
     push @params, $params
         if $params && ref $params ne 'ARRAY';
@@ -44,6 +48,23 @@ method params() {
 
 method add_param($param) {
     push $params->@*, $param;
+    return $self
+}
+
+method add_part(@parts) {
+    push $parts->@*, @parts;
+    return $self
+}
+
+method parts() {
+    $self->_build();
+    my @parts = $parts->@*;
+    return @parts
+}
+
+method reset() {
+    $parts = [];
+    $params = [];
     return $self
 }
 
@@ -64,5 +85,7 @@ method negate($really=true) {
         joined_by => ' ',
         params => [])
 }
+
+method _build {}
 
 1;

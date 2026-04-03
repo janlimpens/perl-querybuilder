@@ -1,9 +1,8 @@
 use v5.40;
-use Object::Pad ':experimental(inherit_field)';
+use Object::Pad;
 
 class Query::Expression::Join;
-inherit Query::Expression '$parts';
-use builtin ':5.40';
+inherit Query::Expression;
 
 field $table :param=undef;
 field $as :param=undef;
@@ -21,28 +20,17 @@ field %types = (
     FULL => 'FULL',
     CROSS => 'CROSS' );
 
-method _build() {
-    my @parts;
+method _build :override ()  {
+    $self->reset();
     $type = $types{uc trim($type)} // die "type $type not recognized";
     die 'no table specified'
         unless $table;
-    push @parts,  $type||(), 'JOIN', $table;
-    push @parts, AS => $as
+    $self->add_part($type||(), 'JOIN', $table);
+    $self->add_part(AS => $as)
         if $as;
     if ($on && $using) { die 'both on and using specified'; }
-    elsif ($on) { push @parts, ON => $on; }
-    elsif ($using) { push @parts, USING => '(', $using, ')'; }
+    elsif ($on) { $self->add_part(ON => $on); }
+    elsif ($using) { $self->add_part(USING => '(', $using, ')'); }
     else { die 'no join condition specified'; }
-    $parts = \@parts;
-}
-
-method as_sql {
-    $self->_build();
-    return $self->SUPER::as_sql()
-}
-use overload '""' => \&as_sql;
-
-method params() {
-    $self->_build();
-    return $self->SUPER::params()
+    return
 }

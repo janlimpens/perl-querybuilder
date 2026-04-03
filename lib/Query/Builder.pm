@@ -79,6 +79,10 @@ class Query::Builder {
         return $dialect_impl->join($table, %args)
     }
 
+    method order_by($column, $direction=undef) {
+        return $dialect_impl->order_by($column, $direction)
+    }
+
 }
 
 1;
