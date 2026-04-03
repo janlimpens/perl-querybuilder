@@ -107,3 +107,8 @@ method as($alias=undef) {
     $as = $alias;
     return $self
 }
+
+method joins(@expressipns) {
+    push $joins->@*, @expressipns;
+    return $self
+}

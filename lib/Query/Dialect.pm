@@ -6,6 +6,7 @@ class Query::Dialect :abstract;
 
 use builtin ':5.40';
 use Query::Expression;
+use Query::Expression::Join;
 
 method negation_for($comparator) {
     state %negations = do {
@@ -142,6 +143,13 @@ method set(%columns_and_values) {
     return Query::Expression->new(
         parts => [$stm],
         params => \@values)
+}
+
+method join($table, %args) {
+    return Query::Expression::Join->new(
+        table => $table,
+        %args
+    )
 }
 
 method select();

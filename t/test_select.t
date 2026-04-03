@@ -15,10 +15,12 @@ subtest 'simple select' => sub {
                     ->columns(qw(company_id contact))
                     ->from('contacts')
                     ->as('contacts'))
-            ->from('invoices')
+            ->from('invoices AS i')
+            ->joins(
+                'JOIN c USING (company_id)',
+                $qb->join(contacts => using => 'company_id') )
             ->where($qb->compare(date => '2026-01-01', comparator => '>'));
-    # is $select->as_sql(), 'WITH ( SELECT company_id, company_name FROM companies ) AS c, ( SELECT company_id, contact FROM contacts ) AS contacts SELECT id, customer_id, date, amount FROM invoices WHERE date > ?', 'select generated';
-    is $select, 'WITH ( SELECT company_id, company_name FROM companies ) AS c, ( SELECT company_id, contact FROM contacts ) AS contacts SELECT id, customer_id, date, amount FROM invoices WHERE date > ?', 'select generated';
+    is $select, 'WITH ( SELECT company_id, company_name FROM companies ) AS c, ( SELECT company_id, contact FROM contacts ) AS contacts SELECT id, customer_id, date, amount FROM invoices AS i WHERE date > ?', 'select generated';
     is [$select->params()], ['2026-01-01'], 'params generated';
 };
 

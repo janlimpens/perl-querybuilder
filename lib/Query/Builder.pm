@@ -75,6 +75,10 @@ class Query::Builder {
         return $dialect_impl->with(@expressions)
     }
 
+    method join($table, %args) {
+        return $dialect_impl->join($table, %args)
+    }
+
 }
 
 1;
