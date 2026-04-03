@@ -1,16 +1,15 @@
 package Query::Expression;
 use v5.40;
-use Object::Pad;
+use Object::Pad ':experimental(inherit_field)';
 use overload '""' => \&as_sql;
-
 class Query::Expression;
 
 use builtin ':5.40';
 
-field $parts :param;
-field $params :param = undef;
+field $parts :inheritable :param = [];
+field $params :inheritable :param = undef;
 field $joined_by :param //= ' ';
-field $brackets :param = undef;
+field $brackets :inheritable :param = undef;
 
 ADJUST {
     die 'parts are required'
@@ -33,7 +32,8 @@ method as_sql {
 
 method params() {
     my @params = $params && ref $params eq 'ARRAY' ? $params->@* : ();
-    push @params, $params if $params && ref $params ne 'ARRAY';
+    push @params, $params
+        if $params && ref $params ne 'ARRAY';
     for my $part ($parts->@*) {
         next
             unless $part isa Query::Expression;

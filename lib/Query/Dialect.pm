@@ -72,4 +72,78 @@ method is_true($column);
 method is_false($column);
 method like($column, $pattern, %args);
 
+method is_array_of_arrays($something) {
+    return 0 unless ref $something eq 'ARRAY';
+    return 0 unless $something->@*;
+    return 0 unless ref $something->[0] eq 'ARRAY';
+    return 1;
+}
+
+method into($table, $columns, $values_or_expression) {
+    my $exp;
+    if ($values_or_expression isa Query::Expression) {
+        $exp = $values_or_expression;
+    } elsif(ref $values_or_expression eq 'ARRAY') {
+        my $value_lists = $values_or_expression;
+        $value_lists = [$value_lists]
+            unless $self->is_array_of_arrays($value_lists);
+        my @exp;
+        for my $value_list ($value_lists->@*) {
+            my @parts;
+            my @params;
+            for my $v ($value_list->@*) {
+                # ( 'x', \'NOW()', 'foo') => '(?, NOW(), ?)'
+                my $is_ref = ref $v eq 'SCALAR';
+                my $part = $is_ref ? $$v : '?';
+                push @parts, $part;
+                push @params, $v
+                    unless $is_ref;
+            }
+            push @exp, Query::Expression->new(
+                parts => \@parts,
+                params => \@params,
+                joined_by => ', ' )->wrap();
+        }
+        $exp = Query::Expression->new(
+            parts => [ VALUES => Query::Expression->new(parts => \@exp) ]);
+    } else {
+        die 'into requires either an array (of arrays) of` values or an expression'
+    }
+    my $stm = sprintf "INTO %s (%s)",
+        $table,
+        join(', ', $columns->@*);
+    return Query::Expression->new(parts => [$stm, $exp]);
+}
+
+method with(@selects) {
+    for (@selects) {
+        die 'expression must have an AS'
+            unless $_->as()
+    }
+    return Query::Expression->new(
+        parts => [ WITH =>
+            Query::Expression->new(
+                parts => [ @selects ],
+                joined_by => ', ' ) ])
+}
+
+method set(%columns_and_values) {
+    my @columns = sort keys %columns_and_values;
+    my @values =
+        map { $columns_and_values{$_} }
+        grep { ! ref $columns_and_values{$_} }
+        @columns;
+    my $stm = sprintf "SET %s",
+        join ', ',
+            map {
+                my $v = $columns_and_values{$_};
+                ref $v ? "$_ = $$v" : "$_ = ?" }
+            @columns;
+    return Query::Expression->new(
+        parts => [$stm],
+        params => \@values)
+}
+
+method select();
+
 1;

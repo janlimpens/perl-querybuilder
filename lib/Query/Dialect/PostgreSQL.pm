@@ -2,6 +2,7 @@ package Query::Dialect::PostgreSQL;
 use v5.40;
 use Object::Pad;
 use Query::Expression;
+use Query::Expression::Select;
 
 class Query::Dialect::PostgreSQL;
 inherit Query::Dialect;
@@ -40,7 +41,7 @@ method compare($column, $value, %args) {
     my $comparator = $args{comparator} // '=';
     $comparator = trim($comparator);
     my $negated = $args{negated} // 0;
-    
+
     if ($negated) {
         # For negated: use negated comparator with ALL
         # e.g., col != ALL(?) is equivalent to NOT IN
@@ -54,6 +55,10 @@ method compare($column, $value, %args) {
             parts => [$column, $comparator, "ANY(?)"],
             params => $value);
     }
+}
+
+method select() {
+    return Query::Expression::Select->new()
 }
 
 1;

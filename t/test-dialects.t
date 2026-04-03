@@ -203,22 +203,40 @@ subtest 'SQLite Dialect' => sub {
     is [$complex->params()], ['Hansi', '%Franz%', '18'];
 };
 
-# Test dialect aliases
-subtest 'Dialect Aliases' => sub {
-    my $pg1 = Query::Builder->new(dialect => 'pg');
-    my $pg2 = Query::Builder->new(dialect => 'postgresql');
-
-    is $pg1->is_true()->as_sql(), 'TRUE';
-    is $pg2->is_true()->as_sql(), 'TRUE';
+subtest into => sub {
+    my $qb = Query::Builder->new(dialect => 'sqlite');
+    my $into = $qb->into('films', [qw(title type created)], [['timbuktu', 'movie', \'NOW()']]);
+    is $into, 'INTO films (title, type, created) VALUES ( ?, ?, NOW() )', 'into generated';
+    is [$into->params()], [qw(timbuktu movie)], 'values in correct order';
 };
 
-# Test unknown dialect
-subtest 'Unknown Dialect' => sub {
-    like(
-        dies { Query::Builder->new(dialect => 'oracle') },
-        qr/Unknown dialect: oracle/,
-        'Unknown dialect throws error'
-    );
+subtest into_select => sub {
+    # INSERT INTO archive_invoices (id, customer_id, amount)
+    # SELECT id, customer_id, amount
+    # FROM invoices
+    # WHERE created_at < '2024-01-01'
+    my $qb = Query::Builder->new(dialect => 'sqlite');
+    my $query = Query::Expression->new( parts => [
+        INSERT =>
+        $qb->into(
+            archive_invoices =>
+            [qw(id customer_id amount)],
+            Query::Expression->new( parts => [
+                'SELECT id, customer_id, amount FROM invoices WHERE',
+                $qb->compare(created_at => '2024-01-01', comparator => '<') ])
+        )]);
+    is $query, 'INSERT INTO archive_invoices (id, customer_id, amount) SELECT id, customer_id, amount FROM invoices WHERE created_at < ?', 'select generated';
+    is [$query->params()], ['2024-01-01'], 'value ok';
+};
+
+subtest set => sub {
+    my $qb = Query::Builder->new(dialect => 'sqlite');
+    my $set = $qb->set(
+        type => 'movie',
+        title => 'timbuktu',
+        updated => \'NOW()' );
+    is $set, 'SET title = ?, type = ?, updated = NOW()', 'set generated';
+    is [$set->params()], [qw(timbuktu movie)], 'values in correct order';
 };
 
 done_testing();

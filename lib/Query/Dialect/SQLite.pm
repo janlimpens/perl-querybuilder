@@ -2,6 +2,7 @@ package Query::Dialect::SQLite;
 use v5.40;
 use Object::Pad;
 use Query::Expression;
+use Query::Expression::Select;
 
 class Query::Dialect::SQLite;
 inherit Query::Dialect;
@@ -32,6 +33,10 @@ method like($column, $pattern, %args) {
         parts => [$column, $operator, '?'],
         params => [$pattern]);
     return $args{negated} ? $exp->negate() : $exp
+}
+
+method select() {
+    return Query::Expression::Select->new()
 }
 
 1;
