@@ -68,6 +68,7 @@ method reset() {
     return $self
 }
 
+# wrapable role?
 method wrap($new_brackets//='()') {
     return Query::Expression->new(
         parts => $parts,
@@ -76,7 +77,7 @@ method wrap($new_brackets//='()') {
         brackets => $new_brackets)
 }
 
-# a bit too specific, maybe a prepend('NOT')?
+# too specific: move to a comparison expression
 method negate($really=true) {
     return $self
         unless $really;

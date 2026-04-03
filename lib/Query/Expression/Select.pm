@@ -1,8 +1,7 @@
 use v5.40;
-use Object::Pad ':experimental(inherit_field)';
+use Object::Pad;
 
-class Query::Expression::Select;
-inherit Query::Expression '$parts';
+class Query::Expression::Select :isa(Query::Expression);
 use builtin ':5.40';
 
 field $as :param=undef;
@@ -10,8 +9,8 @@ field $columns :param=[];
 field $ctes :param=[];
 field $group_by :param=[];
 field $joins :param=[];
-field $limit :inheritable :param=undef;
-field $offset :inheritable :param=undef;
+field $limit :param=undef;
+field $offset :param=undef;
 field $order_by :param=[];
 field $table :param=[];
 field $where :param=undef;

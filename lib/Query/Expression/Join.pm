@@ -1,8 +1,7 @@
 use v5.40;
 use Object::Pad;
 
-class Query::Expression::Join;
-inherit Query::Expression;
+class Query::Expression::Join :isa(Query::Expression);
 
 field $table :param=undef;
 field $as :param=undef;
