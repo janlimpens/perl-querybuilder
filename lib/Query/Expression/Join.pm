@@ -1,7 +1,8 @@
 use v5.40;
 use Object::Pad;
 
-class Query::Expression::Join :isa(Query::Expression);
+class Query::Expression::Join
+    :isa(Query::Expression);
 
 field $table :param=undef;
 field $as :param=undef;
@@ -32,4 +33,24 @@ method _build :override ()  {
     elsif ($using) { $self->add_part(USING => '(', $using, ')'); }
     else { die 'no join condition specified'; }
     return
+}
+
+method type($value//='') {
+    $type = $types{uc trim($value)} // die "type $value not recognized";
+    return $self
+}
+
+method as($value) {
+    $as = $value;
+    return $self
+}
+
+method on($value) {
+    $on = $value;
+    return $self
+}
+
+method using($value) {
+    $using = $value;
+    return $self
 }

@@ -8,6 +8,7 @@ use builtin ':5.40';
 
 field $parts :inheritable :param = [];
 field $params :inheritable :param = [];
+# this is what defines ane xpressin, it is a joined_by context
 field $joined_by :param //= ' ';
 field $brackets :inheritable :param = undef;
 
@@ -21,17 +22,21 @@ ADJUST {
 }
 
 method as_sql {
-    # no () because "" overload comes with 3 args
+    # no signature because "" overload comes with 3 args
     $self->_build();
     my $sql = join $joined_by,
         map { $_ isa Query::Expression ? $_->as_sql() : trim($_) }
         $parts->@*;
     if ($brackets) {
         my ($open, $close) = split //, $brackets;
-        $sql = "$open $sql $close";
+        my ($o, $c) = map { quotemeta $_ } ($open, $close);
+        $sql = "$open $sql $close"
+            unless $sql =~ /^$o.+$c$/g;
     }
-    return $sql
+    return $self->_post_sql($sql)
 }
+
+method _post_sql($sql) { $sql }
 
 method params() {
     $self->_build();
@@ -52,7 +57,7 @@ method add_param($param) {
 }
 
 method add_part(@parts) {
-    push $parts->@*, @parts;
+    push $parts->@*, grep { defined $_} @parts;
     return $self
 }
 
@@ -70,11 +75,8 @@ method reset() {
 
 # wrapable role?
 method wrap($new_brackets//='()') {
-    return Query::Expression->new(
-        parts => $parts,
-        params => $params,
-        joined_by => $joined_by,
-        brackets => $new_brackets)
+    $brackets = $new_brackets;
+    return $self
 }
 
 # too specific: move to a comparison expression

@@ -83,6 +83,10 @@ class Query::Builder {
         return $dialect_impl->order_by($column, $direction)
     }
 
+    method relation($name) {
+            return $dialect_impl->relation($name)
+    }
+
 }
 
 1;

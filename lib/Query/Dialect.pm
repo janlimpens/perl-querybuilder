@@ -8,6 +8,7 @@ use builtin ':5.40';
 use Query::Expression;
 use Query::Expression::Join;
 use Query::Expression::OrderBy;
+use Query::Expression::Relation;
 
 method negation_for($comparator) {
     state %negations = do {
@@ -55,10 +56,18 @@ method combine_or(@expressions) {
 
 method compare($column, $value, %args) {
     my $comparator = $args{comparator} // '=';
+    my $is_literal;
+    if (not defined $value) {
+        $value = 'NULL';
+        $comparator = 'IS';
+    } elsif (ref $value eq 'SCALAR') {
+        $is_literal = true;
+        $value = $value->$*;
+    }
     $comparator = trim($comparator);
     my $negated = !!$args{negated};
     return Query::Expression->new(
-        parts => [$column, $comparator, '?'],
+        parts => [$column, $comparator, $is_literal ? $value : '?'],
         params => $value)->negate($negated)
         unless ref $value eq 'ARRAY';
     if ($comparator eq '=') {
@@ -149,8 +158,7 @@ method set(%columns_and_values) {
 method join($table, %args) {
     return Query::Expression::Join->new(
         table => $table,
-        %args
-    )
+        %args)
 }
 
 method order_by($column, $direction=undef) {
@@ -161,6 +169,13 @@ method order_by($column, $direction=undef) {
     $ob->direction(uc $direction)
         if defined $direction;
     return $ob
+}
+
+method relation($name) {
+    die 'relation requires a name'
+        unless $name;
+    return Query::Expression::Relation->new(
+        name => $name)
 }
 
 method select();

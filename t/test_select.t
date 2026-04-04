@@ -3,26 +3,33 @@ use Test2::V0;
 use lib 'lib';
 use Query::Builder;
 
-subtest 'simple select' => sub {
+subtest 'from readme' => sub {
     my $qb = Query::Builder->new(dialect => 'sqlite');
-    my $select =
-        $qb->select(qw(id customer_id date amount))
-            ->with(
-                $qb->select(qw(company_id company_name))
-                    ->from('companies')
-                    ->as('c'),
-                $qb->select()
-                    ->columns(qw(company_id contact))
-                    ->from('contacts')
-                    ->as('contacts'))
-            ->from('invoices AS i')
-            ->joins(
-                'JOIN c USING (company_id)',
-                $qb->join(contacts => using => 'company_id') )
-            ->where($qb->compare(date => '2026-01-01', comparator => '>'))
-            ->order_by($qb->order_by('date'));
-    is $select, 'WITH ( SELECT company_id, company_name FROM companies ) AS c, ( SELECT company_id, contact FROM contacts ) AS contacts SELECT id, customer_id, date, amount FROM invoices AS i WHERE date > ? ORDER BY date', 'select generated';
-    is [$select->params()], ['2026-01-01'], 'params generated';
+    my $cte = $qb->select($qb->relation('id')->as('theater_id'), 'name', 'city')
+        ->from('venues')
+        ->as('theaters')
+        ->where($qb->compare(type => 'theater'));
+    my $join_1 = $qb->join('roles')
+        ->type('LEFT')
+        ->as('r')
+        ->on( $qb->compare('r.actor_id', \'a.id') );
+    my $join_2 = $qb->join('theaters')
+        ->as('t')
+        ->using('theater_id');
+    my $sql = $qb->select(qw(id first_name last_name gender birthday r.title r.date t.name t.city))
+        ->from('actors a')
+        ->with($cte)
+        ->joins($join_1, $join_2)
+        ->where(
+            $qb->combine(AND =>
+                $qb->is_true('a.active'),
+                $qb->compare('a.age', 30, comparator => '>')))
+        ->order_by(
+            $qb->order_by('a.birthday', 'DESC'),
+            $qb->order_by('a.last_name'))
+        ->limit(100)
+        ->offset(100);
+    is $sql, 'WITH ( SELECT id AS theater_id, name, city FROM venues WHERE type = ? ) AS theaters SELECT id, first_name, last_name, gender, birthday, r.title, r.date, t.name, t.city FROM actors a LEFT JOIN roles AS r ON r.actor_id = a.id JOIN theaters AS t USING ( theater_id ) WHERE a.active AND a.age > ? ORDER BY a.birthday DESC, a.last_name LIMIT ? OFFSET ?', 'got good sql';
 };
 
 done_testing();

@@ -4,35 +4,54 @@ A flexible SQL query builder for Perl with dialect support for PostgreSQL, MySQL
 
 ## Features
 
-- Generates SQL clauses optimized for your database
-- Separates query from parameters
-- Build complex queries from simple building blocks
+- Not an ORM, but an OO approach to SQL queries
+- Stitch them together dynamically with a lot of flexibility
+- Has building blocks in different dialects and you can easily make  your own
 
-## Supported Dialects
+## Currently Supported Dialects
 
 - **PostgreSQL**
 - **MySQL**
 - **SQLite**
-- easy to support others
 
 ## Quick Start
 
 ```perl
 use Query::Builder;
-
 my $qb = Query::Builder->new(dialect => 'sqlite');
-
 my $clause = $qb->combine(AND => 
-    $qb->compare(name => ['Fatima', 'Leandra'],
-    $qb->is_true('can_sing'));
+    $qb->compare(name => ['Fatima', 'Leandra']),
+    $qb->is_true('can_sing'));   
+say $clause;
+say join ',' $clause->params();
+```
 
-my @result = $dbh->selectall_array(
-    "SELECT * FROM table WHERE $clause", { Slice => {} }, 
-    $clause->params());
+```text output
+```
 
-# issues query:
-# SELECT * FROM table WHERE name IN (?, ?) AND can_sing
-# with params ('Fatima', 'Leandra')
+or something less basic:
+
+```perl
+say $qb->select(qw(id first_name last_name gender birthday r.title t.name t.city))
+    ->from('actors a')
+    ->with(
+        $qb->select($qb->relation('id')->as('theater_id'), 'name', 'city'))
+            ->from('venues')
+            ->where($qb->compare(type => 'theater')->as('theaters'))
+    ->joins(
+        $qb->join('roles')
+            ->as('r')
+            ->on($qb->compare('r.actor_id', a.id)),
+        $qb->join('theaters')
+            ->as('t')
+            ->using('theater_id'))
+    ->where($qb->combine(AND => $qb->is_true('a.active'), $qb->compare('a.age', 30, '>')))
+    ->order_by($qb->order_by('a.birthday', 'DESC'), $qb->order_by('a.last_name'))
+    ->limit(100)
+    ->offset(100);
+```
+
+```text output
 ```
 
 ## API Reference

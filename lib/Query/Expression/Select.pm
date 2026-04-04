@@ -1,10 +1,12 @@
 use v5.40;
 use Object::Pad;
 
-class Query::Expression::Select :isa(Query::Expression);
+class Query::Expression::Select
+    :isa(Query::Expression)
+    :does(Query::Role::As);
+
 use builtin ':5.40';
 
-field $as :param=undef;
 field $columns :param=[];
 field $ctes :param=[];
 field $group_by :param=[];
@@ -25,9 +27,7 @@ method _comma(@parts) {
 
 method _build :override ()  {
     $self->reset();
-    $self->add_part('(')
-        if $as;
-    $self->add_part(Query::Expression->new(parts => [WITH => $self->_comma($ctes->@*)]))
+    $self->add_part(Query::Expression->new(parts => [WITH => $self->_comma(map { $_->wrap() } $ctes->@*)]))
         if $ctes->@*;
     $self->add_part('SELECT');
     $columns = ['*']
@@ -39,6 +39,7 @@ method _build :override ()  {
         unless ref $table eq 'ARRAY';
     $self->add_part(FROM => $self->_comma($table->@*))
         if $table->@*;
+    $self->add_part($joins->@*);
     $self->add_part(Query::Expression->new(parts => [WHERE => $where]))
         if $where;
     $self->add_part(Query::Expression->new(parts => ['ORDER BY' => $self->_comma($order_by->@*)]))
@@ -49,8 +50,6 @@ method _build :override ()  {
         if defined $limit;
     $self->add_part(Query::Expression->new(parts => [OFFSET => '?'], params => [$offset]))
         if defined $offset;
-    $self->add_part(')', 'AS', $as)
-        if $as;
     return
 }
 
@@ -89,13 +88,6 @@ method with(@cte) {
     return $self
 }
 
-method as($alias=undef) {
-    return $as
-        unless $alias;
-    $as = $alias;
-    return $self
-}
-
 method joins(@expressipns) {
     push $joins->@*, @expressipns;
     return $self
@@ -104,4 +96,8 @@ method joins(@expressipns) {
 method order_by(@expressions) {
     push $order_by->@*, @expressions;
     return $self
+}
+
+method _post_sql :override ($sql) {
+    return $self->as_as_sql($sql)
 }
