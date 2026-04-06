@@ -9,6 +9,7 @@ use Query::Expression;
 use Query::Expression::Join;
 use Query::Expression::OrderBy;
 use Query::Expression::Relation;
+use Query::Expression::Compound;
 
 method negation_for($comparator) {
     state %negations = do {
@@ -29,21 +30,9 @@ method negate(@expressions) {
 }
 
 method combine($link, @expressions) {
-    return ()
-        unless @expressions;
-    return $expressions[0]
-        if @expressions == 1;
-    $link = trim($link);
-    # Wrap expressions that contain AND/OR operators
-    my @parts = map {
-        ($_ isa Query::Expression && $_->as_sql() =~ / (AND|OR) /)
-            ? $_->wrap()
-            : $_
-    } @expressions;
-    return Query::Expression->new(
-        joined_by => " $link ",
-        parts => \@parts,
-        params => [])
+    return Query::Expression::Compound->new(
+        junctor => $link,
+        expressions => \@expressions )
 }
 
 method combine_and(@expressions) {

@@ -67,6 +67,13 @@ method parts() {
     return @parts
 }
 
+method joined_by($value) {
+    return $joined_by
+        unless $value;
+    $joined_by = $value;
+   return $self
+}
+
 method reset() {
     $parts = [];
     $params = [];
