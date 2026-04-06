@@ -98,4 +98,12 @@ method negate($really=true) {
 
 method _build {}
 
+method clone() {
+    return Query::Expression->new(
+        parts => [ map { $_ isa Query::Expression ? $_->clone() : $_ } $parts->@* ],
+        joined_by => $joined_by,
+        params => [ $params->@* ],
+        brackets => $brackets )
+}
+
 1;

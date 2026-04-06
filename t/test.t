@@ -128,4 +128,12 @@ subtest 'string overload' => sub {
     is $sql, 'SELECT * FROM suspects WHERE friend = ?', 'string overload SQL';
 };
 
+subtest clone => sub {
+    my $q = $qb->compare(friend => 'Carlotta');
+    my $clone = $q->clone();
+    is $clone->as_sql(), 'friend = ?', 'clone SQL';
+    is $clone->as_sql(), $q->as_sql(), 'clone SQL 2';
+    is [$clone->params()], ['Carlotta'], 'clone params';
+};
+
 done_testing();
