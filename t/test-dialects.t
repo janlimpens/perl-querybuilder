@@ -19,7 +19,7 @@ subtest 'PostgreSQL Dialect' => sub {
 
     # Test negated compare (single value)
     my $negated = $qb->compare(name => 'Hansi', negated => 1);
-    is $negated->as_sql(), 'NOT ( name = ? )';
+    is $negated->as_sql(), 'name <> ?';
     is [$negated->params()], ['Hansi'];
 
     # Test negated compare (multiple values - uses != ALL)

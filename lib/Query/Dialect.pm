@@ -6,10 +6,11 @@ class Query::Dialect :abstract;
 
 use builtin ':5.40';
 use Query::Expression;
+use Query::Expression::Comparison;
+use Query::Expression::Compound;
 use Query::Expression::Join;
 use Query::Expression::OrderBy;
 use Query::Expression::Relation;
-use Query::Expression::Compound;
 
 method negation_for($comparator) {
     state %negations = do {
@@ -44,28 +45,10 @@ method combine_or(@expressions) {
 }
 
 method compare($column, $value, %args) {
-    my $comparator = $args{comparator} // '=';
-    my $is_literal;
-    if (not defined $value) {
-        $value = 'NULL';
-        $comparator = 'IS';
-    } elsif (ref $value eq 'SCALAR') {
-        $is_literal = true;
-        $value = $value->$*;
-    }
-    $comparator = trim($comparator);
-    my $negated = !!$args{negated};
-    return Query::Expression->new(
-        parts => [$column, $comparator, $is_literal ? $value : '?'],
-        params => $value)->negate($negated)
-        unless ref $value eq 'ARRAY';
-    if ($comparator eq '=') {
-        my $placeholders = join(', ', ('?') x $value->@*);
-        my $operator = $negated ? 'NOT IN' : 'IN';
-        return Query::Expression->new(
-            parts => [$column, $operator, "($placeholders)"],
-            params => [$value->@*]);
-    }
+    return Query::Expression::Comparison->new(
+        column => $column,
+        value => $value,
+        %args)
 }
 
 method is_true($column);

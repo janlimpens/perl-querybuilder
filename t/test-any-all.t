@@ -58,7 +58,6 @@ subtest 'Negated multiple values - PostgreSQL uses != ALL' => sub {
 
 subtest 'Negated multiple values - MySQL uses NOT IN' => sub {
     my $mysql_not = $mysql->compare(status => ['deleted', 'banned'], negated => 1);
-
     is $mysql_not->as_sql(), 'status NOT IN (?, ?)';
     is [$mysql_not->params()], ['deleted', 'banned'];
 };

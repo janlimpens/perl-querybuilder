@@ -8,7 +8,7 @@ use builtin ':5.40';
 
 field $parts :inheritable :param = [];
 field $params :inheritable :param = [];
-# this is what defines ane xpressin, it is a joined_by context
+# joined_by is what defines an expression, it is its context
 field $joined_by :param //= ' ';
 field $brackets :inheritable :param = undef;
 

@@ -20,7 +20,7 @@ subtest 'multi-value compare with ANY' => sub {
 
 subtest 'negated compare - single value' => sub {
     my $negated = $qb->compare(name => 'Hansi', negated => 1);
-    is $negated->as_sql(), 'NOT ( name = ? )', 'negated SQL';
+    is $negated->as_sql(), 'name <> ?', 'negated SQL';
     is [$negated->params()], ['Hansi'], 'negated params';
 };
 
