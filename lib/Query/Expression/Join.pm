@@ -54,3 +54,12 @@ method using($value) {
     $using = $value;
     return $self
 }
+
+method clone :override () {
+    return Query::Expression::Join->new(
+        table => $table,
+        as => $as,
+        type => $type,
+        on => $on,
+        using => $using )
+}

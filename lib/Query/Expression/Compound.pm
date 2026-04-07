@@ -50,3 +50,9 @@ method _build() {
     }
     return
 }
+
+method clone :override () {
+    return Query::Expression::Compound->new(
+        junctor => $junctor,
+        expressions => $expressions )
+}

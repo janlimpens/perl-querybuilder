@@ -101,3 +101,16 @@ method order_by(@expressions) {
 method _post_sql :override ($sql) {
     return $self->as_as_sql($sql)
 }
+
+method clone :override () {
+    return Query::Expression::Select->new(
+        columns => $columns->@*,
+        table => $table,
+        where => $where,
+        limit => $limit,
+        offset => $offset,
+        group_by => $group_by->@*,
+        ctes => $ctes->@*,
+        joins => $joins->@*,
+        order_by => $order_by->@* )
+}

@@ -23,3 +23,11 @@ method _build :override ()  {
 method _post_sql :override ($sql) {
     return $self->as_as_sql($sql)
 }
+
+method clone :override () {
+    return Query::Expression::Relation->new(
+        schema => $schema,
+        name => $name,
+        table => $table,
+        type => $type )
+}

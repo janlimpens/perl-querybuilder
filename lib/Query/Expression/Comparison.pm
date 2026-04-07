@@ -82,3 +82,19 @@ method _build :override ()  {
 method _post_sql :override ($sql) {
     return $self->not_as_sql($self->as_as_sql($sql))
 }
+
+method clone :override () {
+    return Query::Expression::Comparison->new(
+        column => $column,
+        comparator => $comparator,
+        value => $value,
+        negated => $negated )
+}
+
+method value(@value) {
+    if (@value) {
+        $value = $value[0];
+        return $self;
+    }
+    return $value
+}

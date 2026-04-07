@@ -37,3 +37,10 @@ method _build :override ()  {
         if $collation;
     return
 }
+
+method clone :override () {
+    return Query::Expression::OrderBy->new(
+        column => $column,
+        direction => $direction,
+        collation => $collation )
+}

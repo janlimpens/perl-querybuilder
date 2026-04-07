@@ -134,6 +134,10 @@ subtest clone => sub {
     is $clone->as_sql(), 'friend = ?', 'clone SQL';
     is $clone->as_sql(), $q->as_sql(), 'clone SQL 2';
     is [$clone->params()], ['Carlotta'], 'clone params';
+    $clone->value('Hansi');
+    is $clone->as_sql(), 'friend = ?', 'clone SQL 3';
+    is [$clone->params()], ['Hansi'], 'clone params 2';
+    is $q->value(), 'Carlotta', 'orignal query kept param';
 };
 
 done_testing();
