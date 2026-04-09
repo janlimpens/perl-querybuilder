@@ -35,8 +35,4 @@ method like($column, $pattern, %args) {
     return $args{negated} ? $exp->negate() : $exp
 }
 
-method select() {
-    return Query::Expression::Select->new()
-}
-
 1;

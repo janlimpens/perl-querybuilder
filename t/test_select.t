@@ -32,4 +32,14 @@ subtest 'from readme' => sub {
     is $sql, 'WITH ( SELECT id AS theater_id, name, city FROM venues WHERE type = ? ) AS theaters SELECT id, first_name, last_name, gender, birthday, r.title, r.date, t.name, t.city FROM actors a LEFT JOIN roles AS r ON r.actor_id = a.id JOIN theaters AS t USING ( theater_id ) WHERE a.active AND a.age > ? ORDER BY a.birthday DESC, a.last_name LIMIT ? OFFSET ?', 'got good sql';
 };
 
+subtest clone => sub {
+    my $qb = Query::Builder->new(dialect => 'sqlite');
+    my $q = $qb->select($qb->relation('id')->as('theater_id'), 'name', 'city')
+        ->from('venues')
+        ->where($qb->compare(type => 'theater'));
+    my $count = $q->clone(columns => ['COUNT(*)']);
+    is $count, 'SELECT COUNT(*) FROM venues WHERE type = ?', 'cloned successfully';
+    is [$count->params()], ['theater'], 'params cloned successfully';
+};
+
 done_testing();

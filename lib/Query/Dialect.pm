@@ -11,6 +11,7 @@ use Query::Expression::Compound;
 use Query::Expression::Join;
 use Query::Expression::OrderBy;
 use Query::Expression::Relation;
+use Query::Expression::Select;
 
 method negation_for($comparator) {
     state %negations = do {
@@ -150,6 +151,8 @@ method relation($name) {
         name => $name)
 }
 
-method select();
+method select(@columns) {
+    return Query::Expression::Select->new()->columns(@columns)
+}
 
 1;

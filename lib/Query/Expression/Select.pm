@@ -14,7 +14,7 @@ field $joins :param=[];
 field $limit :param=undef;
 field $offset :param=undef;
 field $order_by :param=[];
-field $table :param=[];
+field $tables :param=[];
 field $where :param=undef;
 
 method _comma(@parts) {
@@ -35,10 +35,10 @@ method _build :override ()  {
     $columns = [$columns]
         unless ref $columns eq 'ARRAY';
     $self->add_part($self->_comma($columns->@*));
-    $table = [$table]
-        unless ref $table eq 'ARRAY';
-    $self->add_part(FROM => $self->_comma($table->@*))
-        if $table->@*;
+    $tables = [$tables]
+        unless ref $tables eq 'ARRAY';
+    $self->add_part(FROM => $self->_comma($tables->@*))
+        if $tables->@*;
     $self->add_part($joins->@*);
     $self->add_part(Query::Expression->new(parts => [WHERE => $where]))
         if $where;
@@ -58,8 +58,8 @@ method columns(@cols) {
     return $self
 }
 
-method from($t) {
-    $table = $t;
+method from(@tables) {
+    push $tables->@*, @tables;
     return $self
 }
 
@@ -88,8 +88,8 @@ method with(@cte) {
     return $self
 }
 
-method joins(@expressipns) {
-    push $joins->@*, @expressipns;
+method joins(@expressions) {
+    push $joins->@*, @expressions;
     return $self
 }
 
@@ -102,15 +102,16 @@ method _post_sql :override ($sql) {
     return $self->as_as_sql($sql)
 }
 
-method clone :override () {
+method clone :override (%params) {
     return Query::Expression::Select->new(
-        columns => $columns->@*,
-        table => $table,
+        columns => $columns,
+        tables => $tables,
         where => $where,
         limit => $limit,
         offset => $offset,
-        group_by => $group_by->@*,
-        ctes => $ctes->@*,
-        joins => $joins->@*,
-        order_by => $order_by->@* )
+        group_by => $group_by,
+        ctes => $ctes,
+        joins => $joins,
+        order_by => $order_by,
+        %params )
 }
