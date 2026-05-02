@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Perl 5.40
+        uses: shogo82148/actions-setup-perl@v1
+        with:
+          perl-version: '5.40'
+
+      - name: Install Carton
+        run: cpanm --notest Carton
+
+      - name: Install dependencies
+        run: carton install
+
+      - name: Run tests
+        run: carton exec prove -l t/
+
+      - name: Syntax check modules
+        run: |
+          find lib -name '*.pm' -print0 \
+            | xargs -0 -n1 perl -Ilib -I. -c 2>&1
