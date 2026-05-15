@@ -11,6 +11,7 @@ use Query::Expression::Compound;
 use Query::Expression::Exists;
 use Query::Expression::Join;
 use Query::Expression::OrderBy;
+use Query::Expression::Aggregate;
 use Query::Expression::Relation;
 use Query::Expression::Select;
 
@@ -152,15 +153,18 @@ method relation($name) {
         name => $name)
 }
 
-method select(@columns) {
-    return Query::Expression::Select->new()->columns(@columns)
-}
+method select();
 
 method exists($subquery) {
     die 'exists requires a subquery expression'
         unless defined $subquery;
     return Query::Expression::Exists->new(
         subquery => $subquery)
+}
+
+method aggr($expression) {
+    return Query::Expression::Aggregate->new(
+        expression => $expression)
 }
 
 1;

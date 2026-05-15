@@ -91,6 +91,10 @@ class Query::Builder {
         return $dialect_impl->exists($subquery)
     }
 
+    method aggr($expression) {
+        return $dialect_impl->aggr($expression)
+    }
+
 }
 
 1;

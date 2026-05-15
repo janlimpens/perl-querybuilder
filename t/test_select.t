@@ -13,6 +13,62 @@ subtest 'having' => sub {
     is [$sql->params()], [5], 'having params';
 };
 
+subtest 'aggr and auto group_by' => sub {
+    my $qb = Query::Builder->new(dialect => 'sqlite');
+
+    # aggr with alias
+    my $aggr = $qb->aggr('COUNT(*)')->as('cnt');
+    is $aggr, 'COUNT(*) AS cnt', 'aggr with alias produces AS SQL';
+
+    # aggr without alias
+    my $aggr_no_alias = $qb->aggr('SUM(amount)');
+    is $aggr_no_alias, 'SUM(amount)', 'aggr without alias omits AS';
+
+    # auto group_by with mixed columns and aggregates
+    my $sql = $qb->select('department', $qb->aggr('COUNT(*)')->as('cnt'))
+        ->from('employees')
+        ->group_by();
+    is $sql, 'SELECT department, COUNT(*) AS cnt FROM employees GROUP BY 1',
+        'auto group_by produces positional references';
+
+    # explicit group_by still works alongside aggregates
+    my $sql2 = $qb->select('department', 'city', $qb->aggr('SUM(salary)')->as('total'))
+        ->from('employees')
+        ->group_by('department', 'city');
+    is $sql2, 'SELECT department, city, SUM(salary) AS total FROM employees GROUP BY department, city',
+        'explicit group_by with aggregates';
+
+    # auto group_by with only aggregate columns (no GROUP BY)
+    my $sql3 = $qb->select($qb->aggr('COUNT(*)')->as('cnt'))
+        ->from('employees')
+        ->group_by();
+    is $sql3, 'SELECT COUNT(*) AS cnt FROM employees',
+        'auto group_by with only aggregates omits GROUP BY';
+
+    # * excluded from auto group_by
+    my $sql5 = $qb->select('*')
+        ->from('t')
+        ->group_by();
+    is $sql5, 'SELECT * FROM t',
+        '* excluded from auto group_by';
+
+    # having with aggregate and auto group_by
+    my $sql6 = $qb->select('department', $qb->aggr('COUNT(*)')->as('cnt'))
+        ->from('employees')
+        ->group_by()
+        ->having($qb->compare('cnt', 5, comparator => '>'));
+    is $sql6, 'SELECT department, COUNT(*) AS cnt FROM employees GROUP BY 1 HAVING cnt > ?',
+        'having with auto group_by';
+    is [$sql6->params()], [5], 'having params with auto group_by';
+
+    # relation objects included in auto group_by
+    my $sql7 = $qb->select($qb->relation('id')->as('emp_id'), 'name', $qb->aggr('COUNT(*)')->as('cnt'))
+        ->from('employees')
+        ->group_by();
+    is $sql7, 'SELECT id AS emp_id, name, COUNT(*) AS cnt FROM employees GROUP BY 1, 2',
+        'relation objects included in auto group_by positions';
+};
+
 subtest 'from readme' => sub {
     my $qb = Query::Builder->new(dialect => 'sqlite');
     my $cte = $qb->select($qb->relation('id')->as('theater_id'), 'name', 'city')

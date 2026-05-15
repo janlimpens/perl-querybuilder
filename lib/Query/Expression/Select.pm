@@ -6,6 +6,7 @@ class Query::Expression::Select
     :does(Query::Role::As);
 
 use builtin ':5.40';
+use Query::Expression::Aggregate;
 
 field $columns :param=[];
 field $ctes :param=[];
@@ -82,7 +83,20 @@ method offset($off) {
 }
 
 method group_by(@g) {
-    push $group_by->@*, @g;
+    if (@g) {
+        push $group_by->@*, @g;
+        return $self
+    }
+    my $pos = 1;
+    for my $col ($columns->@*) {
+        my $skip = 0;
+        $skip = 1 if $col isa Query::Expression::Aggregate;
+        $skip = 1 if ref $col eq 'SCALAR';
+        $skip = 1 if !ref $col && $col eq '*';
+        push $group_by->@*, "$pos"
+            unless $skip;
+        $pos++;
+    }
     return $self
 }
 
