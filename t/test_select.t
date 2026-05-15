@@ -3,6 +3,16 @@ use Test2::V0;
 use lib 'lib';
 use Query::Builder;
 
+subtest 'having' => sub {
+    my $qb = Query::Builder->new(dialect => 'sqlite');
+    my $sql = $qb->select('department', 'COUNT(*) AS cnt')
+        ->from('employees')
+        ->group_by('department')
+        ->having($qb->compare('cnt', 5, comparator => '>'));
+    is $sql, 'SELECT department, COUNT(*) AS cnt FROM employees GROUP BY department HAVING cnt > ?', 'having with aggregation';
+    is [$sql->params()], [5], 'having params';
+};
+
 subtest 'from readme' => sub {
     my $qb = Query::Builder->new(dialect => 'sqlite');
     my $cte = $qb->select($qb->relation('id')->as('theater_id'), 'name', 'city')

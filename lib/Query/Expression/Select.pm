@@ -16,6 +16,7 @@ field $offset :param=undef;
 field $order_by :param=[];
 field $tables :param=[];
 field $where :param=undef;
+field $having :param=undef;
 
 method _comma(@parts) {
     return
@@ -44,6 +45,8 @@ method _build :override ()  {
         if $where;
     $self->add_part(Query::Expression->new(parts => ['GROUP BY' => $self->_comma($group_by->@*)]))
         if $group_by->@*;
+    $self->add_part(Query::Expression->new(parts => [HAVING => $having]))
+        if $having;
     $self->add_part(Query::Expression->new(parts => ['ORDER BY' => $self->_comma($order_by->@*)]))
         if $order_by->@*;
     $self->add_part(Query::Expression->new(parts => [LIMIT => '?'], params => [$limit]))
@@ -83,6 +86,11 @@ method group_by(@g) {
     return $self
 }
 
+method having($clause) {
+    $having = $clause;
+    return $self
+}
+
 method with(@cte) {
     push $ctes->@*, @cte;
     return $self
@@ -109,9 +117,10 @@ method clone :override (%params) {
         where => $where,
         limit => $limit,
         offset => $offset,
-        group_by => $group_by,
-        ctes => $ctes,
-        joins => $joins,
-        order_by => $order_by,
+        group_by => $group_by->@*,
+        having => $having,
+        ctes => $ctes->@*,
+        joins => $joins->@*,
+        order_by => $order_by->@*,
         %params )
 }
