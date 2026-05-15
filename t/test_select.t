@@ -69,6 +69,29 @@ subtest 'aggr and auto group_by' => sub {
         'relation objects included in auto group_by positions';
 };
 
+subtest 'is null' => sub {
+    my $qb = Query::Builder->new(dialect => 'sqlite');
+
+    my $is_null = $qb->is_null('deleted_at');
+    is $is_null, 'deleted_at IS NULL', 'is null';
+
+    my $is_not_null = $qb->is_null('email', false);
+    is $is_not_null, 'email IS NOT NULL', 'is not null';
+
+    my $sql = $qb->select('id', 'name')
+        ->from('users')
+        ->where($qb->is_null('deleted_at'));
+    is $sql, 'SELECT id, name FROM users WHERE deleted_at IS NULL', 'is null in where';
+
+    my $sql2 = $qb->select('id')
+        ->from('users')
+        ->where(
+            $qb->combine_and(
+                $qb->is_null('deleted_at'),
+                $qb->is_null('email', false)));
+    is $sql2, 'SELECT id FROM users WHERE deleted_at IS NULL AND email IS NOT NULL', 'is null combined';
+};
+
 subtest 'distinct' => sub {
     my $qb = Query::Builder->new(dialect => 'sqlite');
 

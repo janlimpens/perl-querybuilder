@@ -58,6 +58,13 @@ method is_true($column);
 method is_false($column);
 method like($column, $pattern, %args);
 
+method is_null($column, $really=true) {
+    my $kw = $really ? 'IS NULL' : 'IS NOT NULL';
+    return Query::Expression->new(
+        parts => [$column, $kw],
+        params => [])
+}
+
 method is_array_of_arrays($something) {
     return 0 unless ref $something eq 'ARRAY';
     return 0 unless $something->@*;

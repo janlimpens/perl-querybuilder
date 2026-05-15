@@ -51,6 +51,10 @@ class Query::Builder {
         return $dialect_impl->is_false($column)
     }
 
+    method is_null($column, $really=true) {
+        return $dialect_impl->is_null($column, $really)
+    }
+
     method negate(@expressions) {
         return $dialect_impl->negate(@expressions)
     }
