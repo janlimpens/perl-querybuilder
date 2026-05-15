@@ -148,6 +148,30 @@ subtest 'union intersect except' => sub {
     is $sql, 'SELECT * FROM ( SELECT id, name FROM users ) UNION ( SELECT id, name FROM archived_users )', 'union in from';
 };
 
+subtest 'exists and subquery' => sub {
+    my $qb = Query::Builder->new(dialect => 'sqlite');
+
+    my $sub = $qb->select('1')->from('orders')->where($qb->compare('orders.user_id', \'users.id'));
+
+    my $ex = $qb->exists($sub);
+    is $ex, 'EXISTS ( SELECT 1 FROM orders WHERE orders.user_id = users.id )', 'exists';
+
+    my $nex = $qb->exists($sub, false);
+    is $nex, 'NOT EXISTS ( SELECT 1 FROM orders WHERE orders.user_id = users.id )', 'not exists';
+
+    my $sql = $qb->select('id', 'name')
+        ->from('users')
+        ->where($qb->exists($sub));
+    is $sql, 'SELECT id, name FROM users WHERE EXISTS ( SELECT 1 FROM orders WHERE orders.user_id = users.id )', 'exists in where';
+
+    my $sub2 = $qb->select('id')->from('roles')->where($qb->compare('name', 'admin'));
+    my $sql2 = $qb->select('id', 'name')
+        ->from('users')
+        ->where($qb->compare('role_id', $sub2, comparator => 'IN'));
+    is $sql2, 'SELECT id, name FROM users WHERE role_id IN ( SELECT id FROM roles WHERE name = ? )', 'in subquery';
+    is [$sql2->params()], ['admin'], 'in subquery params';
+};
+
 subtest 'distinct' => sub {
     my $qb = Query::Builder->new(dialect => 'sqlite');
 

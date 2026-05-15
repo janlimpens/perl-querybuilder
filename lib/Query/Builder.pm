@@ -115,6 +115,10 @@ class Query::Builder {
         return $dialect_impl->except(@selects)
     }
 
+    method exists($select, $really=true) {
+        return $dialect_impl->exists($select, $really)
+    }
+
     method aggr($expression) {
         return $dialect_impl->aggr($expression)
     }

@@ -200,6 +200,14 @@ method except(@selects) {
         joined_by => ' EXCEPT ')
 }
 
+method exists($select, $really=true) {
+    my $kw = $really ? 'EXISTS' : 'NOT EXISTS';
+    $select->wrap();
+    return Query::Expression->new(
+        parts => [$kw, $select],
+        params => [])
+}
+
 method aggr($expression) {
     return Query::Expression::Aggregate->new(
         expression => $expression)

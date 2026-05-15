@@ -33,8 +33,10 @@ method _build :override ()  {
     $self->add_part(Query::Expression->new(parts => [WITH => $self->_comma(map { $_->wrap() } $ctes->@*)]))
         if $ctes->@*;
     my $select = 'SELECT';
-    $select .= ' DISTINCT' if $distinct;
-    $select .= " $distinct" if $distinct && $distinct ne '1';
+    $select .= ' DISTINCT'
+        if $distinct;
+    $select .= " $distinct"
+        if $distinct && $distinct ne '1';
     $self->add_part($select);
     $columns = ['*']
         unless $columns;
