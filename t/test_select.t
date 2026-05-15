@@ -69,6 +69,26 @@ subtest 'aggr and auto group_by' => sub {
         'relation objects included in auto group_by positions';
 };
 
+subtest 'distinct' => sub {
+    my $qb = Query::Builder->new(dialect => 'sqlite');
+
+    my $sql = $qb->select('department')
+        ->distinct()
+        ->from('employees');
+    is $sql, 'SELECT DISTINCT department FROM employees', 'plain distinct';
+
+    my $sql2 = $qb->select('department', 'name')
+        ->distinct('department')
+        ->from('employees');
+    is $sql2, 'SELECT DISTINCT ON (department) department, name FROM employees', 'distinct on';
+
+    my $sql3 = $qb->select('department', $qb->aggr('COUNT(*)')->as('cnt'))
+        ->distinct()
+        ->from('employees')
+        ->group_by();
+    is $sql3, 'SELECT DISTINCT department, COUNT(*) AS cnt FROM employees GROUP BY 1', 'distinct with group by';
+};
+
 subtest 'from readme' => sub {
     my $qb = Query::Builder->new(dialect => 'sqlite');
     my $cte = $qb->select($qb->relation('id')->as('theater_id'), 'name', 'city')

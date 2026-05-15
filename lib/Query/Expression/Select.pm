@@ -9,6 +9,7 @@ use builtin ':5.40';
 use Query::Expression::Aggregate;
 
 field $columns :param=[];
+field $distinct :param=undef;
 field $ctes :param=[];
 field $group_by :param=[];
 field $joins :param=[];
@@ -31,7 +32,10 @@ method _build :override ()  {
     $self->reset();
     $self->add_part(Query::Expression->new(parts => [WITH => $self->_comma(map { $_->wrap() } $ctes->@*)]))
         if $ctes->@*;
-    $self->add_part('SELECT');
+    my $select = 'SELECT';
+    $select .= ' DISTINCT' if $distinct;
+    $select .= " $distinct" if $distinct && $distinct ne '1';
+    $self->add_part($select);
     $columns = ['*']
         unless $columns;
     $columns = [$columns]
@@ -55,6 +59,15 @@ method _build :override ()  {
     $self->add_part(Query::Expression->new(parts => [OFFSET => '?'], params => [$offset]))
         if defined $offset;
     return
+}
+
+method distinct(@cols) {
+    if (@cols) {
+        $distinct = 'ON (' . join(', ', @cols) . ')';
+    } else {
+        $distinct = 1;
+    }
+    return $self
 }
 
 method columns(@cols) {
@@ -126,8 +139,9 @@ method _post_sql :override ($sql) {
 
 method clone :override (%params) {
     return Query::Expression::Select->new(
-        columns => $columns,
-        tables => $tables,
+        columns => $columns->@*,
+        distinct => $distinct,
+        tables => $tables->@*,
         where => $where,
         limit => $limit,
         offset => $offset,
