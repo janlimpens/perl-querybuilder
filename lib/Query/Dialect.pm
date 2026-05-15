@@ -169,6 +169,13 @@ method exists($subquery) {
         subquery => $subquery)
 }
 
+method between($column, $low, $high, $really=true) {
+    my $kw = $really ? 'BETWEEN' : 'NOT BETWEEN';
+    return Query::Expression->new(
+        parts => [$column, $kw, '?', 'AND', '?'],
+        params => [$low, $high])
+}
+
 method aggr($expression) {
     return Query::Expression::Aggregate->new(
         expression => $expression)

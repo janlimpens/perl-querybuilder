@@ -92,6 +92,23 @@ subtest 'is null' => sub {
     is $sql2, 'SELECT id FROM users WHERE deleted_at IS NULL AND email IS NOT NULL', 'is null combined';
 };
 
+subtest 'between' => sub {
+    my $qb = Query::Builder->new(dialect => 'sqlite');
+
+    my $btw = $qb->between('age', 18, 65);
+    is $btw, 'age BETWEEN ? AND ?', 'basic between';
+    is [$btw->params()], [18, 65], 'between params';
+
+    my $nbtw = $qb->between('score', 0, 50, false);
+    is $nbtw, 'score NOT BETWEEN ? AND ?', 'not between';
+    is [$nbtw->params()], [0, 50], 'not between params';
+
+    my $sql = $qb->select('id', 'name')
+        ->from('users')
+        ->where($qb->between('age', 18, 65));
+    is $sql, 'SELECT id, name FROM users WHERE age BETWEEN ? AND ?', 'between in where';
+};
+
 subtest 'distinct' => sub {
     my $qb = Query::Builder->new(dialect => 'sqlite');
 
