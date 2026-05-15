@@ -176,6 +176,30 @@ method between($column, $low, $high, $really=true) {
         params => [$low, $high])
 }
 
+method union(@selects) {
+    return Query::Expression->new(
+        parts => [ map { $_->wrap() } @selects ],
+        joined_by => ' UNION ')
+}
+
+method union_all(@selects) {
+    return Query::Expression->new(
+        parts => [ map { $_->wrap() } @selects ],
+        joined_by => ' UNION ALL ')
+}
+
+method intersect(@selects) {
+    return Query::Expression->new(
+        parts => [ map { $_->wrap() } @selects ],
+        joined_by => ' INTERSECT ')
+}
+
+method except(@selects) {
+    return Query::Expression->new(
+        parts => [ map { $_->wrap() } @selects ],
+        joined_by => ' EXCEPT ')
+}
+
 method aggr($expression) {
     return Query::Expression::Aggregate->new(
         expression => $expression)

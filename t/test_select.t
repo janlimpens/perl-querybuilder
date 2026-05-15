@@ -109,6 +109,45 @@ subtest 'between' => sub {
     is $sql, 'SELECT id, name FROM users WHERE age BETWEEN ? AND ?', 'between in where';
 };
 
+subtest 'between' => sub {
+    my $qb = Query::Builder->new(dialect => 'sqlite');
+
+    my $btw = $qb->between('age', 18, 65);
+    is $btw, 'age BETWEEN ? AND ?', 'basic between';
+    is [$btw->params()], [18, 65], 'between params';
+
+    my $nbtw = $qb->between('score', 0, 50, false);
+    is $nbtw, 'score NOT BETWEEN ? AND ?', 'not between';
+    is [$nbtw->params()], [0, 50], 'not between params';
+
+    my $sql = $qb->select('id', 'name')
+        ->from('users')
+        ->where($qb->between('age', 18, 65));
+    is $sql, 'SELECT id, name FROM users WHERE age BETWEEN ? AND ?', 'between in where';
+};
+
+subtest 'union intersect except' => sub {
+    my $qb = Query::Builder->new(dialect => 'sqlite');
+
+    my $s1 = $qb->select('id', 'name')->from('users');
+    my $s2 = $qb->select('id', 'name')->from('archived_users');
+
+    my $union = $qb->union($s1, $s2);
+    is $union, '( SELECT id, name FROM users ) UNION ( SELECT id, name FROM archived_users )', 'union';
+
+    my $union_all = $qb->union_all($s1, $s2);
+    is $union_all, '( SELECT id, name FROM users ) UNION ALL ( SELECT id, name FROM archived_users )', 'union all';
+
+    my $intersect = $qb->intersect($s1, $s2);
+    is $intersect, '( SELECT id, name FROM users ) INTERSECT ( SELECT id, name FROM archived_users )', 'intersect';
+
+    my $except = $qb->except($s1, $s2);
+    is $except, '( SELECT id, name FROM users ) EXCEPT ( SELECT id, name FROM archived_users )', 'except';
+
+    my $sql = $qb->select('*')->from($qb->union($s1, $s2));
+    is $sql, 'SELECT * FROM ( SELECT id, name FROM users ) UNION ( SELECT id, name FROM archived_users )', 'union in from';
+};
+
 subtest 'distinct' => sub {
     my $qb = Query::Builder->new(dialect => 'sqlite');
 

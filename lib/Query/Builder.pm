@@ -99,6 +99,22 @@ class Query::Builder {
         return $dialect_impl->between($column, $low, $high, $really)
     }
 
+    method union(@selects) {
+        return $dialect_impl->union(@selects)
+    }
+
+    method union_all(@selects) {
+        return $dialect_impl->union_all(@selects)
+    }
+
+    method intersect(@selects) {
+        return $dialect_impl->intersect(@selects)
+    }
+
+    method except(@selects) {
+        return $dialect_impl->except(@selects)
+    }
+
     method aggr($expression) {
         return $dialect_impl->aggr($expression)
     }
