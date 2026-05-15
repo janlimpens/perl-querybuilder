@@ -91,10 +91,6 @@ class Query::Builder {
             return $dialect_impl->relation($name)
     }
 
-    method exists($subquery) {
-        return $dialect_impl->exists($subquery)
-    }
-
     method between($column, $low, $high, $really=true) {
         return $dialect_impl->between($column, $low, $high, $really)
     }

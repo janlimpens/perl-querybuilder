@@ -162,13 +162,6 @@ method relation($name) {
 
 method select();
 
-method exists($subquery) {
-    die 'exists requires a subquery expression'
-        unless defined $subquery;
-    return Query::Expression::Exists->new(
-        subquery => $subquery)
-}
-
 method between($column, $low, $high, $really=true) {
     my $kw = $really ? 'BETWEEN' : 'NOT BETWEEN';
     return Query::Expression->new(

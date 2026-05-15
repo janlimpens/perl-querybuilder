@@ -141,16 +141,16 @@ method _post_sql :override ($sql) {
 
 method clone :override (%params) {
     return Query::Expression::Select->new(
-        columns => $columns->@*,
+        columns => $columns,
         distinct => $distinct,
-        tables => $tables->@*,
+        tables => $tables,
         where => $where,
         limit => $limit,
         offset => $offset,
-        group_by => $group_by->@*,
+        group_by => $group_by,
         having => $having,
-        ctes => $ctes->@*,
-        joins => $joins->@*,
-        order_by => $order_by->@*,
+        ctes => $ctes,
+        joins => $joins,
+        order_by => $order_by,
         %params )
 }
