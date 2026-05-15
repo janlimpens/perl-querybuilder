@@ -160,7 +160,9 @@ method relation($name) {
         name => $name)
 }
 
-method select();
+method select(@columns) {
+    return Query::Expression::Select->new()->columns(@columns)
+}
 
 method between($column, $low, $high, $really=true) {
     my $kw = $really ? 'BETWEEN' : 'NOT BETWEEN';

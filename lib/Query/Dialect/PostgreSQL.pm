@@ -57,8 +57,4 @@ method compare($column, $value, %args) {
     }
 }
 
-method select() {
-    return Query::Expression::Select->new()
-}
-
 1;
